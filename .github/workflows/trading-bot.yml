@@ -1,0 +1,85 @@
+# GitHub Actions Workflow for ML Trading Bot
+# This workflow can run backtests automatically on schedule or manually
+
+name: Trading Bot Backtest
+
+on:
+  # Run manually from Actions tab
+  workflow_dispatch:
+    inputs:
+      use_synthetic:
+        description: 'Use synthetic data (true/false)'
+        required: false
+        default: 'true'
+      use_grid_search:
+        description: 'Use grid search for model (true/false)'
+        required: false
+        default: 'false'
+
+  # Run on schedule (optional - uncomment to enable)
+  # schedule:
+  #   - cron: '0 0 * * 0'  # Every Sunday at midnight UTC
+
+  # Run on push to main (optional - uncomment to enable)
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run backtest with synthetic data
+      if: github.event.inputs.use_synthetic == 'true' || github.event_name == 'schedule'
+      run: |
+        if [ "${{ github.event.inputs.use_grid_search }}" == "true" ]; then
+          python main.py --synthetic --grid-search
+        else
+          python main.py --synthetic
+        fi
+
+    - name: Run backtest with real data
+      if: github.event.inputs.use_synthetic == 'false'
+      env:
+        BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+        BINANCE_API_SECRET: ${{ secrets.BINANCE_API_SECRET }}
+      run: |
+        if [ "${{ github.event.inputs.use_grid_search }}" == "true" ]; then
+          python main.py --grid-search
+        else
+          python main.py
+        fi
+
+    - name: Upload results
+      uses: actions/upload-artifact@v3
+      with:
+        name: backtest-results
+        path: |
+          outputs/*.png
+          outputs/*.txt
+          outputs/*.csv
+          models/*.pkl
+        retention-days: 30
+
+    - name: Display summary
+      run: |
+        echo "=== Backtest Summary ==="
+        cat outputs/summary.txt
+
+# Note: To use real Binance data, you need to:
+# 1. Go to repository Settings → Secrets and variables → Actions
+# 2. Add BINANCE_API_KEY and BINANCE_API_SECRET
+# 3. Run workflow manually and set use_synthetic to 'false'
