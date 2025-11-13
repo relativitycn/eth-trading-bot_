@@ -1,0 +1,174 @@
+
+============================================================
+ML TRADING BOT - FULL PIPELINE
+============================================================
+
+Generating synthetic data...
+Generating 180 days of synthetic 1m BTC data...
+Generated 259200 candles
+Date range: 2025-05-17 13:34:58.199266 to 2025-11-13 13:34:58.199266
+Price range: $43626.09 - $2581967.08
+Synthetic data saved to data/raw_data.csv
+
+============================================================
+PREPARING FEATURES
+============================================================
+Calculating target with 15-candle lookahead...
+Target calculated. Valid samples: 259185/259200
+
+Target distribution:
+count    259185.000000
+mean          0.508637
+std           0.375321
+min           0.000000
+25%           0.133333
+50%           0.533333
+75%           0.866667
+max           1.000000
+Name: target, dtype: float64
+
+Label distribution:
+  Long (1):     89764 (34.63%)
+  Short (-1):   84949 (32.78%)
+  Neutral (0):  84472 (32.59%)
+Engineering features...
+Features engineered. Total columns: 108
+
+Preparing data for ML...
+Initial shape: (259185, 108)
+After cleaning: (258986, 108)
+Rows removed: 199
+
+Data with features saved to data/data_with_features.csv
+
+============================================================
+TRAINING MODEL
+============================================================
+Number of features: 94
+
+=== Data Split ===
+Train: 155391 samples (2025-05-17 16:53:58.245330992 to 2025-09-02 14:44:34.215377174)
+Test:  51797 samples (2025-09-02 14:45:34.215608656 to 2025-10-08 14:01:46.205469728)
+OOT:   51798 samples (2025-10-08 14:02:46.205701210 to 2025-11-13 13:19:58.195793766)
+
+Using SIMPLE TRAINING (faster)
+
+=== Training LightGBM ===
+Parameters: {'n_estimators': 200, 'learning_rate': 0.05, 'max_depth': 5, 'num_leaves': 31, 'min_child_samples': 20, 'subsample': 0.8, 'colsample_bytree': 0.8, 'random_state': 42, 'n_jobs': -1, 'verbose': -1}
+
+------------------------------------------------------------
+
+=== TRAIN Evaluation ===
+MSE:  0.127275
+RMSE: 0.356756
+MAE:  0.320879
+R²:   0.095710
+Directional Accuracy: 0.6198
+
+=== TEST Evaluation ===
+MSE:  0.143952
+RMSE: 0.379410
+MAE:  0.338801
+R²:   -0.023061
+Directional Accuracy: 0.5250
+
+=== OOT Evaluation ===
+MSE:  0.147267
+RMSE: 0.383754
+MAE:  0.341846
+R²:   -0.041736
+Directional Accuracy: 0.5182
+
+Feature importance plot saved to outputs/feature_importance.png
+
+Top 30 features:
+  obv: 328.00
+  high_low_ratio_60: 247.00
+  returns: 213.00
+  day_of_month: 197.00
+  price_to_sma_200: 186.00
+  volume_sma_20: 183.00
+  price_to_ema_200: 172.00
+  hour: 169.00
+  high_low_ratio_30: 151.00
+  returns_skew_20: 122.00
+  hour_sin: 116.00
+  returns_kurt_20: 115.00
+  returns_std_20: 113.00
+  volume_sma_10: 112.00
+  macd_diff_12_26: 111.00
+  adx: 107.00
+  hour_cos: 102.00
+  macd_signal_12_26: 100.00
+  price_change_60: 98.00
+  sma_200: 97.00
+  mfi: 96.00
+  ema_200: 84.00
+  ema_100: 77.00
+  macd_12_26: 75.00
+  price_to_sma_50: 68.00
+  atr_percent: 68.00
+  bb_low: 65.00
+  day_of_week: 65.00
+  volume_sma_5: 64.00
+  bb_width: 62.00
+Prediction plots saved to outputs/predictions.png
+
+Model saved to models/lightgbm_model.pkl
+
+============================================================
+RUNNING BACKTEST
+============================================================
+
+=== Data Split ===
+Train: 155391 samples (2025-05-17 16:53:58.245330992 to 2025-09-02 14:44:34.215377174)
+Test:  51797 samples (2025-09-02 14:45:34.215608656 to 2025-10-08 14:01:46.205469728)
+OOT:   51798 samples (2025-10-08 14:02:46.205701210 to 2025-11-13 13:19:58.195793766)
+
+============================================================
+BACKTESTING ON OOT DATA
+============================================================
+
+============================================================
+BACKTEST RESULTS
+============================================================
+
+💰 FINANCIAL METRICS
+  Initial Capital:     $10,000.00
+  Final Capital:       $12,600,752,051.06
+  Total Return:        +126007420.51%
+  Total PnL:           $+12,600,000,804.83
+
+📊 RISK METRICS
+  Sharpe Ratio:        123.0398
+  Sortino Ratio:       338.1071
+  Max Drawdown:        -0.29%
+  Calmar Ratio:        432845628.1731
+
+📈 TRADING METRICS
+  Number of Trades:    3258
+  Win Rate:            88.49%
+  Profit Factor:       64.52
+  Avg Win:             $+4,439,251.09
+  Avg Loss:            $-528,960.22
+  Avg Trade PnL:       $+3,867,403.56
+============================================================
+
+Backtest plots saved to outputs/backtest_results.png
+Trades exported to outputs/trades.csv
+
+Summary report saved to outputs/summary.txt
+
+============================================================
+PIPELINE COMPLETED SUCCESSFULLY!
+============================================================
+
+Output files:
+  - outputs/backtest_results.png
+  - outputs/feature_importance.png
+  - outputs/predictions.png
+  - outputs/trades.csv
+  - outputs/summary.txt
+  - models/lightgbm_model.pkl
+
+

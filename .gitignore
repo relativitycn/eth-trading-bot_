@@ -1,6 +1,5 @@
 # Data files
 data/
-*.csv
 
 # Model files
 models/

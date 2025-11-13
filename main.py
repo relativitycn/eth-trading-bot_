@@ -28,12 +28,13 @@ def create_directories():
     os.makedirs('outputs', exist_ok=True)
 
 
-def fetch_data(force_download=False):
+def fetch_data(force_download=False, use_synthetic=False):
     """
-    Fetch historical data from Binance
+    Fetch historical data from Binance or generate synthetic data
 
     Args:
         force_download: If True, download fresh data even if file exists
+        use_synthetic: If True, use synthetic data instead of Binance
 
     Returns:
         DataFrame with OHLCV data
@@ -44,15 +45,29 @@ def fetch_data(force_download=False):
         print(f"Loading existing data from {data_file}")
         fetcher = BinanceDataFetcher()
         df = fetcher.load_data(data_file)
+    elif use_synthetic:
+        print("Generating synthetic data...")
+        from generate_synthetic_data import generate_synthetic_btc_data
+        df = generate_synthetic_btc_data(n_days=config.LOOKBACK_DAYS, interval_minutes=1)
+        df.to_csv(data_file)
+        print(f"Synthetic data saved to {data_file}")
     else:
         print("Fetching fresh data from Binance...")
-        fetcher = BinanceDataFetcher()
-        df = fetcher.fetch_historical_klines(
-            symbol=config.SYMBOL,
-            interval=config.INTERVAL,
-            lookback_days=config.LOOKBACK_DAYS
-        )
-        fetcher.save_data(df, data_file)
+        try:
+            fetcher = BinanceDataFetcher()
+            df = fetcher.fetch_historical_klines(
+                symbol=config.SYMBOL,
+                interval=config.INTERVAL,
+                lookback_days=config.LOOKBACK_DAYS
+            )
+            fetcher.save_data(df, data_file)
+        except Exception as e:
+            print(f"Error fetching from Binance: {e}")
+            print("Falling back to synthetic data...")
+            from generate_synthetic_data import generate_synthetic_btc_data
+            df = generate_synthetic_btc_data(n_days=config.LOOKBACK_DAYS, interval_minutes=1)
+            df.to_csv(data_file)
+            print(f"Synthetic data saved to {data_file}")
 
     return df
 
@@ -244,6 +259,7 @@ def main():
     parser.add_argument('--download', action='store_true', help='Force download fresh data')
     parser.add_argument('--grid-search', action='store_true', help='Use grid search for model training (slower)')
     parser.add_argument('--skip-download', action='store_true', help='Skip data download and use existing data')
+    parser.add_argument('--synthetic', action='store_true', help='Use synthetic data instead of Binance')
 
     args = parser.parse_args()
 
@@ -256,7 +272,7 @@ def main():
 
     # Step 1: Fetch data
     if not args.skip_download:
-        df = fetch_data(force_download=args.download)
+        df = fetch_data(force_download=args.download, use_synthetic=args.synthetic)
     else:
         print("Skipping data download, using existing data...")
         df = pd.read_csv('data/data_with_features.csv', index_col=0, parse_dates=True)
